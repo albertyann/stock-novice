@@ -43,3 +43,41 @@ pnpm test:unit
 ```sh
 pnpm lint
 ```
+
+
+## depen
+
+```sh
+pnpm install klinecharts
+```
+
+### 启动
+
+```sh
+pnpm run dev
+```
+
+### 打包
+
+```sh
+pnpm run build
+```
+
+### 测试
+
+```sh
+pnpm run test
+```
+
+### 代码格式化
+
+```sh
+pnpm run lint
+```
+
+### 代码格式化并自动修复
+
+```sh
+    
+`
+```

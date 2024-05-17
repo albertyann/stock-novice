@@ -1,21 +1,22 @@
 <script setup>
-// https://klinecharts.com/guide/introduction
-
 import { onMounted, onUnmounted, ref } from 'vue'
 import { init, dispose } from 'klinecharts'
 import axios from 'axios'
 
 
 const stocks = ref([])
-const asymbol = ref('')
+const curStock = ref({
+  symbol: '',
+  name: ''
+})
 const chart = {}
 
-function refresh(symbol) {
-  console.log(symbol)
-  axios.get("http://127.0.0.1:5000/api/fetch/kline/"+symbol)
+function refresh(stock) {
+  console.log(stock.symbol)
+  axios.get("http://127.0.0.1:5000/api/fetch/kline/"+ stock.symbol)
   .then(response => {
     console.log(response)
-    loadStock(asymbol.value)
+    loadStock(stock, null)
   })
   .catch(e => {
     this.errors.push(e)
@@ -32,20 +33,19 @@ function fetchTodayRiseStock() {
   })
 }
 
-function loadStock(symbol, event) {
+function loadStock(stock, event) {
   if (event) {
     const y = event.target.offsetTop
     let ele = document.getElementById('item-view')
     ele.style.top = y - 30 + 'px'
   }
 
-  if (symbol === '') {
+  if (stock == null) {
     return
   }
 
-  console.log(symbol)
-  asymbol.value = symbol
-  axios.get("http://127.0.0.1:5000/api/kline/"+symbol)
+  curStock.value = stock
+  axios.get("http://127.0.0.1:5000/api/kline/"+ stock.symbol)
   .then(response => {
     const data = response.data.data
     const chartData = data.map(item => {
@@ -90,14 +90,14 @@ var options = {
     type: 'candle_solid',
     // 蜡烛柱
     bar: {
-      upColor: '#2DC08E',
-      downColor: '#F92855',
+      upColor: '#F92855',
+      downColor: '#2DC08E',
       noChangeColor: '#888888',
-      upBorderColor: '#2DC08E',
-      downBorderColor: '#F92855',
+      upBorderColor: '#F92855',
+      downBorderColor: '#2DC08E',
       noChangeBorderColor: '#888888',
-      upWickColor: '#2DC08E',
-      downWickColor: '#F92855',
+      upWickColor: '#F92855',
+      downWickColor: '#2DC08E',
       noChangeWickColor: '#888888'
     },
     // 面积图
@@ -615,7 +615,8 @@ var options = {
 }
 
 onMounted(() => {
-  chart.chart = init('chart', options)
+  chart.chart = init('chart')
+  chart.chart.setStyles(options)
   chart.chart.createIndicator('VOL')
 
   axios.get("http://127.0.0.1:5000/api/stock")
@@ -640,14 +641,13 @@ onUnmounted(() => {
     <div class="item-box">
       <div class="item" v-for="stock in stocks" :key="stock.symbol">
           <div>
-            {{ stock.symbol }}
-            <a :href="'https://xueqiu.com/S/'+ stock.symbol" target="_blank">→</a>
+            <label>{{ stock.symbol }}</label>
           </div>
-          <div @click="loadStock(stock.symbol, $event)">
+          <div @click="loadStock(stock, $event)">
             <a class="name" href="javascript:void(0)">{{ stock.name }}</a>
           </div>
-          <div>
-            <span>地产</span>
+          <div class="item-tags-box">
+            <span class="stock_tag" v-for="tag in stock.tags" :key="tag"> {{ tag }}</span>
           </div>
       </div>
       <div id="item-view" class="item-view"></div>
@@ -655,10 +655,12 @@ onUnmounted(() => {
 
     <div class="chart-box">
       <label>
-        {{ asymbol }}
-        <button @click="refresh(asymbol)">Refresh</button>
+        <a :href="'https://xueqiu.com/S/'+ curStock.symbol" target="_blank">{{ curStock.symbol }}</a>
+        {{ curStock.name }}
+        <button @click="refresh(curStock)">更新K线</button>
+        <button @click="refresh(curStock)">生成TAG</button>
       </label>
-      <div id="chart" style="width:600px;height:400px" />
+      <div id="chart" style="width:600px;height:320px" />
     </div>
   </div>
   
@@ -670,9 +672,10 @@ onUnmounted(() => {
     float: left;
     flex-wrap: wrap;
     justify-content: flex-start;
-    width: 180px;
+    width: 130px;
     overflow: auto;
     height: calc(100vh - 200px);
+    overflow-x: hidden;
   }
   .item-box a.name {
     display: block;
@@ -681,40 +684,38 @@ onUnmounted(() => {
   .item-view {
     float: left;
     border: 1px solid #7293b1;
-    width: 162px;
-    height: 84px;
+    width: calc(100% - 8px);
+    height: 89px;
     position: absolute;
     z-index: -99;
     left: 0;
     top: 0;
     overflow: auto;
   }
-  .item {
+  .item-tags-box {
     display: inline-block;
-    margin: 1px;
-    width: 160px;
-    padding: 5px;
-    background-color: aliceblue;
+    overflow: hidden;
+    content: normal;
+    height: 22px;
   }
   .item {
     display: inline-block;
     margin: 1px;
-    width: 160px;
+    width: calc(100% - 10px);
     padding: 5px;
     background-color: aliceblue;
   }
-  .item span {
+  .item .stock_tag {
+    margin: 0 5px 0 0 ;
     font-size: 0.9em;
     color: #d9896a;
     background-color: #fcefe3;
-    padding: 3px;
   }
   .chart-box {
     float: left;
     flex-direction: column;
     justify-content: flex-start;
     width: 600px;
-    height: 500px;
     margin-left: 10px;
   }
   .chart-box label {

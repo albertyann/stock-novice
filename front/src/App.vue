@@ -32,7 +32,13 @@ function fetchTodayRiseStock() {
   })
 }
 
-function loadStock(symbol) {
+function loadStock(symbol, event) {
+  if (event) {
+    const y = event.target.offsetTop
+    let ele = document.getElementById('item-view')
+    ele.style.top = y - 30 + 'px'
+  }
+
   if (symbol === '') {
     return
   }
@@ -41,8 +47,6 @@ function loadStock(symbol) {
   asymbol.value = symbol
   axios.get("http://127.0.0.1:5000/api/kline/"+symbol)
   .then(response => {
-    
-
     const data = response.data.data
     const chartData = data.map(item => {
       return {
@@ -54,9 +58,7 @@ function loadStock(symbol) {
         close:     item[5]
       }
     })
-    console.log(chartData)
     chart.chart.applyNewData(chartData)
-    chart.chart.createIndicator('VOL')
   })
   .catch(e => {
     this.errors.push(e)
@@ -614,6 +616,7 @@ var options = {
 
 onMounted(() => {
   chart.chart = init('chart', options)
+  chart.chart.createIndicator('VOL')
 
   axios.get("http://127.0.0.1:5000/api/stock")
   .then(response => {
@@ -634,31 +637,90 @@ onUnmounted(() => {
   </div>
   <div>
     <h3>今日关注</h3>
-    <div>
+    <div class="item-box">
       <div class="item" v-for="stock in stocks" :key="stock.symbol">
-        <label>
-          <button @click="loadStock(stock.symbol)">{{ stock.name }}</button>
-        </label>
-        <a :href="'https://xueqiu.com/S/'+ stock.symbol" target="_blank">{{ stock.name }}</a>
+          <div>
+            {{ stock.symbol }}
+            <a :href="'https://xueqiu.com/S/'+ stock.symbol" target="_blank">→</a>
+          </div>
+          <div @click="loadStock(stock.symbol, $event)">
+            <a class="name" href="javascript:void(0)">{{ stock.name }}</a>
+          </div>
+          <div>
+            <span>地产</span>
+          </div>
       </div>
+      <div id="item-view" class="item-view"></div>
+    </div>
+
+    <div class="chart-box">
+      <label>
+        {{ asymbol }}
+        <button @click="refresh(asymbol)">Refresh</button>
+      </label>
+      <div id="chart" style="width:600px;height:400px" />
     </div>
   </div>
-  <div>
-    <input type="text" v-model="asymbol.symbol" />
-    <button @click="loadStock">Load</button>
-  </div>
-  <div>
-    <label>
-      {{ asymbol }}
-      <button @click="refresh(asymbol)">Refresh</button>
-    </label>
-    <div id="chart" style="width:600px;height:500px" />
-  </div>
+  
 </template>
 
 <style>
+  .item-box {
+    position: relative;
+    float: left;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 180px;
+    overflow: auto;
+    height: calc(100vh - 200px);
+  }
+  .item-box a.name {
+    display: block;
+    padding: 0;
+  }
+  .item-view {
+    float: left;
+    border: 1px solid #7293b1;
+    width: 162px;
+    height: 84px;
+    position: absolute;
+    z-index: -99;
+    left: 0;
+    top: 0;
+    overflow: auto;
+  }
   .item {
     display: inline-block;
-    margin: 5px;
+    margin: 1px;
+    width: 160px;
+    padding: 5px;
+    background-color: aliceblue;
+  }
+  .item {
+    display: inline-block;
+    margin: 1px;
+    width: 160px;
+    padding: 5px;
+    background-color: aliceblue;
+  }
+  .item span {
+    font-size: 0.9em;
+    color: #d9896a;
+    background-color: #fcefe3;
+    padding: 3px;
+  }
+  .chart-box {
+    float: left;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 600px;
+    height: 500px;
+    margin-left: 10px;
+  }
+  .chart-box label {
+    margin-bottom: 10px;
+  }
+  .chart-box button {
+    margin-left: 10px;
   }
 </style>

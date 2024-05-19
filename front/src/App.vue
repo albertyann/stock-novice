@@ -619,7 +619,7 @@ onMounted(() => {
   chart.chart.setStyles(options)
   chart.chart.createIndicator('VOL')
 
-  axios.get("http://127.0.0.1:5000/api/stock")
+  axios.get("http://127.0.0.1:5000/api/last/stock")
   .then(response => {
     console.log(response)
     stocks.value = response.data.data
@@ -633,9 +633,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
-    <button @click="fetchTodayRiseStock">获取今日上涨的股票</button>
+  <div class="grid grid-cols-3 gap-4">
+    <div>
+      <button class="btn-primary" @click="fetchTodayRiseStock">获取今日上涨的股票</button>
+    </div>
   </div>
+
   <div>
     <h3>今日关注</h3>
     <div class="item-box">

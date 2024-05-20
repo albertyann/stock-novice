@@ -3,7 +3,6 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { init, dispose } from 'klinecharts'
 import axios from 'axios'
 
-
 const stocks = ref([])
 const curStock = ref({
   symbol: '',
@@ -12,11 +11,29 @@ const curStock = ref({
 const chart = {}
 
 function refresh(stock) {
-  console.log(stock.symbol)
   axios.get("http://127.0.0.1:5000/api/fetch/kline/"+ stock.symbol)
   .then(response => {
-    console.log(response)
     loadStock(stock, null)
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+}
+
+function favorite(stock) {
+  axios.get("http://127.0.0.1:5000/api/stock/favorite/"+ stock.symbol)
+  .then(response => {
+    console.log(response)
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+}
+
+function unFavorite(stock) {
+  axios.get("http://127.0.0.1:5000/api/stock/unfavorite/"+ stock.symbol)
+  .then(response => {
+    console.log(response)
   })
   .catch(e => {
     this.errors.push(e)
@@ -26,11 +43,35 @@ function refresh(stock) {
 function fetchTodayRiseStock() {
   axios.get("http://127.0.0.1:5000/api/stock/today/rise")
   .then(response => {
-    console.log(response)
+    stocks.value = response.data.data
+    curStock.value = stocks.value[0]
+    loadStock(curStock.value, null)
+    resetViewPosition()
   })
   .catch(e => {
     this.errors.push(e)
   })
+  .catch(e => {
+    this.errors.push(e)
+  })
+}
+
+function fetchFavoriteStock() {
+  axios.get("http://127.0.0.1:5000/api/stock/favorite")
+  .then(response => {
+    stocks.value = response.data.data
+    curStock.value = stocks.value[0]
+    loadStock(curStock.value, null)
+    resetViewPosition()
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+}
+
+function resetViewPosition() {
+  let ele = document.getElementById('item-view')
+  ele.style.top = 0 + 'px'
 }
 
 function loadStock(stock, event) {
@@ -623,7 +664,8 @@ onMounted(() => {
   .then(response => {
     console.log(response)
     stocks.value = response.data.data
-    console.log(stocks)
+    curStock.value = stocks.value[0]
+    loadStock(curStock.value, null)
   })
 })
 
@@ -634,13 +676,15 @@ onUnmounted(() => {
 
 <template>
   <div class="grid grid-cols-3 gap-4">
-    <div>
-      <button class="btn-primary" @click="fetchTodayRiseStock">获取今日上涨的股票</button>
+    <div class="box-content p-3 border-2">
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">今日上涨</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchFavoriteStock">收藏股票</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">关注中</a>
     </div>
   </div>
 
   <div>
-    <h3>今日关注</h3>
+    <h3>今日[{{ (new Date()).getUTCDate()  }}]</h3>
     <div class="item-box">
       <div class="item" v-for="stock in stocks" :key="stock.symbol">
           <div>
@@ -657,12 +701,18 @@ onUnmounted(() => {
     </div>
 
     <div class="chart-box">
-      <label>
-        <a :href="'https://xueqiu.com/S/'+ curStock.symbol" target="_blank">{{ curStock.symbol }}</a>
+      <div class="mb-5">
+        <a class="btn-stock-a" :href="'https://xueqiu.com/S/'+ curStock.symbol" target="_blank">{{ curStock.symbol }}</a>
         {{ curStock.name }}
-        <button @click="refresh(curStock)">更新K线</button>
-        <button @click="refresh(curStock)">生成TAG</button>
-      </label>
+        <a class="btn-default" @click="refresh(curStock)">更新K线</a>
+        <a class="btn-default" @click="refresh(curStock)">生成TAG</a>
+        <span v-if="curStock.favorite == 0">
+          <a class="btn-default" @click="favorite(curStock)">关注</a>
+        </span>
+        <span v-if="curStock.favorite == 1">
+          <a class="btn-default" @click="unFavorite(curStock)">取消关注</a>
+        </span>
+      </div>
       <div id="chart" style="width:600px;height:320px" />
     </div>
   </div>

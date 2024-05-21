@@ -675,11 +675,21 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="grid grid-cols-3 gap-4">
-    <div class="box-content p-3 border-2">
+  <div class="grid grid-cols-4 gap-px-4">
+    <div class="box-content py-4">
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">Down</a>
       <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">今日上涨</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchFavoriteStock">收藏股票</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">关注中</a>
+    </div>
+    <div class="box-content py-4">
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchFavoriteStock">关注</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">头部</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">长期</a>
+    </div>
+    <div class="box-content py-4">
+      <label>
+        <input type="text" class="border-2" v-model="searchValue" />
+      </label>
+      <button class="btn-default" @click="stockSearch">确定</button>
     </div>
   </div>
 

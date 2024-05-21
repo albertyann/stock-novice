@@ -56,6 +56,19 @@ function fetchTodayRiseStock() {
   })
 }
 
+function downTodayRiseStock() {
+  axios.get("http://127.0.0.1:5000/api/stock/today/down")
+  .then(response => {
+    lastStockList()
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+}
+
 function fetchFavoriteStock() {
   axios.get("http://127.0.0.1:5000/api/stock/favorite")
   .then(response => {
@@ -100,6 +113,19 @@ function loadStock(stock, event) {
       }
     })
     chart.chart.applyNewData(chartData)
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+}
+
+function lastStockList() {
+  axios.get("http://127.0.0.1:5000/api/last/stock")
+  .then(response => {
+    stocks.value = response.data.data
+    curStock.value = stocks.value[0]
+    loadStock(curStock.value, null)
+    resetViewPosition()
   })
   .catch(e => {
     this.errors.push(e)
@@ -660,13 +686,7 @@ onMounted(() => {
   chart.chart.setStyles(options)
   chart.chart.createIndicator('VOL')
 
-  axios.get("http://127.0.0.1:5000/api/last/stock")
-  .then(response => {
-    console.log(response)
-    stocks.value = response.data.data
-    curStock.value = stocks.value[0]
-    loadStock(curStock.value, null)
-  })
+  lastStockList()
 })
 
 onUnmounted(() => {
@@ -676,42 +696,48 @@ onUnmounted(() => {
 
 <template>
   <div class="grid grid-cols-4 gap-px-4">
-    <div class="box-content py-4">
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">Down</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">今日上涨</a>
+    <div class="py-4 col-start-1 col-end-1">
+      <a class="btn-primary" href="javascript:void(0)" @click="downTodayRiseStock">Down</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">标注</a>
     </div>
-    <div class="box-content py-4">
+    <div class="py-4 col-start-2 col-end-3">
+      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">今日</a>
       <a class="btn-primary" href="javascript:void(0)" @click="fetchFavoriteStock">关注</a>
       <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">头部</a>
       <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">长期</a>
     </div>
-    <div class="box-content py-4">
-      <label>
-        <input type="text" class="border-2" v-model="searchValue" />
-      </label>
-      <button class="btn-default" @click="stockSearch">确定</button>
+    <div class="py-4 col-start-3 col-end-5">
+      <div class="group relative rounded-md dark:bg-slate-700 dark:highlight-white/10 dark:focus-within:bg-transparent">
+        <svg width="20" height="20" fill="currentColor" class="absolute left-3 top-1/2 -mt-2.5 text-slate-400 pointer-events-none group-focus-within:text-blue-500 dark:text-slate-500">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"></path>
+        </svg>
+        <input type="text" class="input-search" v-model="searchValue" />
+        <a class="btn-default pl-5" @click="stockSearch">确定</a>
+      </div>
     </div>
   </div>
 
-  <div>
-    <h3>今日[{{ (new Date()).getUTCDate()  }}]</h3>
-    <div class="item-box">
-      <div class="item" v-for="stock in stocks" :key="stock.symbol">
-          <div>
-            <label>{{ stock.symbol }}</label>
-          </div>
-          <div @click="loadStock(stock, $event)">
-            <a class="name" href="javascript:void(0)">{{ stock.name }}</a>
-          </div>
-          <div class="item-tags-box">
-            <span class="stock_tag" v-for="tag in stock.tags" :key="tag"> {{ tag }}</span>
-          </div>
+  <div class="grid grid-flow-col grid-cols-8 gap-2">
+    <div class="col-start-1 col-end-1 p-1">
+      <h3>今日[{{ (new Date()).getUTCDate()  }}]</h3>
+      <div class="item-box">
+        <div class="item" v-for="stock in stocks" :key="stock.symbol">
+            <div>
+              <label>{{ stock.symbol }}</label>
+            </div>
+            <div @click="loadStock(stock, $event)">
+              <a class="name" href="javascript:void(0)">{{ stock.name }}</a>
+            </div>
+            <div class="item-tags-box">
+              <span class="stock_tag" v-for="tag in stock.tags" :key="tag"> {{ tag }}</span>
+            </div>
+        </div>
+        <div id="item-view" class="item-view"></div>
       </div>
-      <div id="item-view" class="item-view"></div>
     </div>
 
-    <div class="chart-box">
-      <div class="mb-5">
+    <div class="col-start-2 col-end-9 p-1">
+      <div class="w-full">
         <a class="btn-stock-a" :href="'https://xueqiu.com/S/'+ curStock.symbol" target="_blank">{{ curStock.symbol }}</a>
         {{ curStock.name }}
         <a class="btn-default" @click="refresh(curStock)">更新K线</a>
@@ -723,7 +749,9 @@ onUnmounted(() => {
           <a class="btn-default" @click="unFavorite(curStock)">取消关注</a>
         </span>
       </div>
-      <div id="chart" style="width:600px;height:320px" />
+      <div>
+        <div id="chart" style="width:700px;height:420px" />
+      </div>
     </div>
   </div>
   
@@ -735,14 +763,9 @@ onUnmounted(() => {
     float: left;
     flex-wrap: wrap;
     justify-content: flex-start;
-    width: 130px;
     overflow: auto;
     height: calc(100vh - 200px);
     overflow-x: hidden;
-  }
-  .item-box a.name {
-    display: block;
-    padding: 0;
   }
   .item-view {
     float: left;

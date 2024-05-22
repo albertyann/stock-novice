@@ -91,7 +91,7 @@ function loadStock(stock, event) {
   if (event) {
     const y = event.target.offsetTop
     let ele = document.getElementById('item-view')
-    ele.style.top = y - 30 + 'px'
+    ele.style.top = y - 32 + 'px'
   }
 
   if (stock == null) {

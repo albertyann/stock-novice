@@ -2,7 +2,7 @@ import os
 import json
 import time
 from datetime import datetime
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, delete
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 from models import KLine, Stock, RiseStock, StockTag, FavoriteStock
@@ -327,7 +327,14 @@ def fetch_kline(symbol):
                 session.add(kline)
                 session.commit()
         else:
-            for row in new_kline['data']['item'][-10:]:
+            n_klines = new_kline['data']['item'][-10:]
+            kline = n_klines[-1]
+            app.logger.info(kline)
+            stmt = delete(KLine).where(KLine.timestamp > kline[0]).where(KLine.symbol == symbol)
+            
+            app.logger.info(stmt)
+
+            for row in n_klines:
                 timestamp = row[0]
                 # 如果时间戳小于上次的时间戳，则跳过
                 if timestamp <= last_timestamp:

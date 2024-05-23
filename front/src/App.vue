@@ -8,6 +8,8 @@ const curStock = ref({
   symbol: '',
   name: ''
 })
+const searchValue = ref('')
+// const retStock = ref('')
 const chart = {}
 
 function refresh(stock) {
@@ -47,6 +49,25 @@ function fetchTodayRiseStock() {
     curStock.value = stocks.value[0]
     loadStock(curStock.value, null)
     resetViewPosition()
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+  .catch(e => {
+    this.errors.push(e)
+  })
+}
+
+function stockSearch() {
+  axios.get("http://127.0.0.1:5000/api/stock/search/"+searchValue.value)
+  .then(response => {
+    console.log(response)
+    let retStock = response.data.data
+    
+    stocks.value.push(retStock)
+    curStock.value = retStock
+    loadStock(retStock, null)
+    // resetViewPosition()
   })
   .catch(e => {
     this.errors.push(e)

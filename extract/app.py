@@ -346,7 +346,7 @@ def fetch_kline(symbol):
                     session.add(kline)
                     session.commit()
 
-    return jsonify(data)
+    return jsonify({"data": {"code": 0}})
 
 if __name__ == '__main__':
     app.run(debug=True)

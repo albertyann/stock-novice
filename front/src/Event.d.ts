@@ -13,7 +13,7 @@ export async function request(url: string): Promise<ResponseData> {
     try {
         // 使用 axios 获取数据
         const response = await axios.get<ResponseData>(BASE_URL + url);
-
+        console.log(response)
         // 从响应中返回数据
         return response.data.data;
     } catch (error) {

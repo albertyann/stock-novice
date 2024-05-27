@@ -5,7 +5,7 @@ import axios from 'axios'
 import chartOption from './chart.config'
 
 import {
-    request, refresh, unFavorite, fetchTodayRiseStock,
+    request, unFavorite, fetchTodayRiseStock,
     stockSearch, downTodayRiseStock, 
     getStockKlineData
 } from './Event.d'
@@ -18,6 +18,19 @@ const curStock = ref({
 const searchValue = ref('')
 // const retStock = ref('')
 const chart = {}
+
+function refresh(stock) {
+	request("/api/fetch/kline/"+ stock.symbol)
+	.then(res => {
+		if (res.code == 0) {
+			loadStock(stock, null)
+		}
+
+	})
+	.catch(e => {
+		console.log(e)
+	})
+}
 
 function favorite(stock) {
     request("/api/stock/favorite/"+ stock.symbol)

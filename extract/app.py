@@ -116,7 +116,7 @@ def get_stock_tag(symbol):
 
 
 @app.route('/api/last/stock')
-def index():
+def selectLastStock():
     last_stock = session.query(RiseStock).order_by(RiseStock.date.desc()).first()
     stocks = session.query(RiseStock).filter(RiseStock.date == last_stock.date).all()
     favorite_stocks = session.query(FavoriteStock).all()

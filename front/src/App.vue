@@ -18,6 +18,7 @@ const curStock = ref({
 })
 const searchValue = ref('')
 const chart = {}
+const klineLastDate = ref('')
 
 hotkeys("j", () => {
   let stockIndex = 0
@@ -27,11 +28,14 @@ hotkeys("j", () => {
       break
     }
   }
+  if (stockIndex == stocks.value.length - 1) {
+	console.log('last')
+	return false
+  }
   if (stockIndex < stocks.value.length - 1) {
     stockIndex++
-  } else {
-    stockIndex = 0
   }
+
   curStock.value = stocks.value[stockIndex]
   loadStock(curStock.value, null)
   nextViewPosition()
@@ -45,9 +49,11 @@ hotkeys("k", () => {
       break
     }
   }
-  if (stockIndex <= 0) {
-    stockIndex = 0
-  } else {
+  if (stockIndex == 0) {
+	console.log('first')
+	return false
+  }
+  if (stockIndex > 0) {
     stockIndex--
   }
   curStock.value = stocks.value[stockIndex]
@@ -111,10 +117,10 @@ function favorite(stock) {
     })
 }
 
-function fetchFavoriteStock() {
+function favoriteStockList() {
   request("/api/stock/favorite")
-  .then(data => {
-        stocks.value = data
+  .then(res => {
+        stocks.value = res.data
         curStock.value = stocks.value[0]
         loadStock(curStock.value, null)
         resetViewPosition()
@@ -126,26 +132,34 @@ function fetchFavoriteStock() {
 
 
 function loadStock(stock, event) {
-  if (event) {
-    const y = event.target.offsetTop
-    let ele = document.getElementById('item-view')
-    ele.style.top = y - 32 + 'px'
-  }
+	if (event) {
+		const y = event.target.offsetTop
+		let ele = document.getElementById('item-view')
+		ele.style.top = y - 32 + 'px'
+	}
 
-  if (stock == null) {
-    return
-  }
+	if (stock == null) {
+		return
+	}
 
   curStock.value = stock
-  getStockKlineData(stock).then((res) => {
+  getStockKlineData(stock)
+  .then((res) => {
+    if (res.length > 0) {
+		let stock = res.at(-1)
+		let d = new Date(stock.timestamp)
+		klineLastDate.value = (d.getMonth() + 1) + "-" + d.getDate()
+    } else {
+		klineLastDate.value = ''
+	}
     chart.chart.applyNewData(res)
   })
 }
 
-function lastStockList() {
+function todayStockList() {
   request("/api/last/stock")
-  .then(response => {
-    stocks.value = response.data
+  .then(res => {
+    stocks.value = res.data
     curStock.value = stocks.value[0]
 
     loadStock(curStock.value, null)
@@ -165,13 +179,12 @@ onMounted(() => {
   chart.chart.setStyles(chartOption)
   chart.chart.createIndicator('VOL')
 
-  lastStockList()
+  todayStockList()
 })
 
 onUnmounted(() => {
   dispose('chart')
 })
-
 </script>
 
 <template>
@@ -181,8 +194,8 @@ onUnmounted(() => {
       <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">标注</a>
     </div>
     <div class="py-4 col-start-2 col-end-3">
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">今日</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchFavoriteStock">关注</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="todayStockList">今日</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="favoriteStockList">关注</a>
       <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">头部</a>
       <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">长期</a>
     </div>
@@ -229,6 +242,9 @@ onUnmounted(() => {
         </span>
         <span v-if="curStock.favorite == 1">
           <a class="btn-default" @click="unFavorite(curStock)">取消关注</a>
+        </span>
+        <span>
+          {{ klineLastDate }}
         </span>
       </div>
       <div>

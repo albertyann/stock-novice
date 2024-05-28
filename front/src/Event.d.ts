@@ -95,19 +95,6 @@ export function downTodayRiseStock() {
     })
 }
 
-export function fetchFavoriteStock() {
-    axios.get(BASE_URL + "/api/stock/favorite")
-    .then(response => {
-        stocks.value = response.data.data
-        curStock.value = stocks.value[0]
-        loadStock(curStock.value, null)
-        resetViewPosition()
-    })
-    .catch(e => {
-        errors.push(e)
-    })
-}
-
 export async function getStockKlineData(stock) {
     const chartData = [];
 

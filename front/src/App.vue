@@ -1,13 +1,14 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 import { init, dispose } from 'klinecharts'
-import axios from 'axios'
 import chartOption from './chart.config'
+import hotkeys from "hotkeys-js"
+
 
 import {
     request, unFavorite, fetchTodayRiseStock,
     stockSearch, downTodayRiseStock, 
-    getStockKlineData
+    getStockKlineData, errors, tips
 } from './Event.d'
 
 const stocks = ref([])
@@ -16,16 +17,84 @@ const curStock = ref({
   name: ''
 })
 const searchValue = ref('')
-// const retStock = ref('')
 const chart = {}
+
+hotkeys("j", () => {
+  let stockIndex = 0
+  for (let i = 0; i < stocks.value.length; i++) {
+    if (stocks.value[i].symbol == curStock.value.symbol) {
+      stockIndex = i
+      break
+    }
+  }
+  if (stockIndex < stocks.value.length - 1) {
+    stockIndex++
+  } else {
+    stockIndex = 0
+  }
+  curStock.value = stocks.value[stockIndex]
+  loadStock(curStock.value, null)
+  nextViewPosition()
+});
+
+hotkeys("k", () => {
+  let stockIndex = 0
+  for (let i = 0; i < stocks.value.length; i++) {
+    if (stocks.value[i].symbol == curStock.value.symbol) {
+      stockIndex = i
+      break
+    }
+  }
+  if (stockIndex <= 0) {
+    stockIndex = 0
+  } else {
+    stockIndex--
+  }
+  curStock.value = stocks.value[stockIndex]
+  loadStock(curStock.value, null)
+  prevViewPosition()
+});
+
+hotkeys("r", () => {
+  refresh(curStock.value)
+});
+
+
+function resetViewPosition() {
+  let ele = document.getElementById('item-view')
+  ele.style.top = 0 + 'px'
+}
+
+function nextViewPosition() {
+  let ele = document.getElementById('item-view')
+  let y = ele.offsetTop
+  ele.style.top =  (y + 88) + 'px'
+
+  let box_elem = document.getElementById('item-box')
+  // 设置 box_elem 滚动条位置
+  box_elem.scrollTop = y + 88
+}
+
+function prevViewPosition() {
+  let ele = document.getElementById('item-view')
+  let y = ele.offsetTop
+  if (y <= 0) {
+    ele.style.top = 0 + 'px'
+  } else {
+    ele.style.top = (y - 88) + 'px'
+  }
+
+  let box_elem = document.getElementById('item-box')
+  // 设置 box_elem 滚动条位置
+  box_elem.scrollTop = y - 88
+}
 
 function refresh(stock) {
 	request("/api/fetch/kline/"+ stock.symbol)
 	.then(res => {
-		if (res.code == 0) {
+		if (res.data.code == 0) {
 			loadStock(stock, null)
 		}
-
 	})
 	.catch(e => {
 		console.log(e)
@@ -34,7 +103,6 @@ function refresh(stock) {
 
 function favorite(stock) {
     request("/api/stock/favorite/"+ stock.symbol)
-    // axios.get(BASE_URL + )
     .then(response => {
         console.log(response)
     })
@@ -56,10 +124,6 @@ function fetchFavoriteStock() {
     })
 }
 
-function resetViewPosition() {
-  let ele = document.getElementById('item-view')
-  ele.style.top = 0 + 'px'
-}
 
 function loadStock(stock, event) {
   if (event) {
@@ -79,18 +143,21 @@ function loadStock(stock, event) {
 }
 
 function lastStockList() {
-  axios.get("http://127.0.0.1:5000/api/last/stock")
+  request("/api/last/stock")
   .then(response => {
-    stocks.value = response.data.data
+    stocks.value = response.data
     curStock.value = stocks.value[0]
-    console.log(stocks.value.length)
 
     loadStock(curStock.value, null)
     resetViewPosition()
   })
   .catch(e => {
-    this.errors.push(e)
+    errors.push(e)
   })
+}
+
+function onPageDown(e) {
+  console.log(e)
 }
 
 onMounted(() => {
@@ -104,6 +171,7 @@ onMounted(() => {
 onUnmounted(() => {
   dispose('chart')
 })
+
 </script>
 
 <template>
@@ -125,14 +193,16 @@ onUnmounted(() => {
         </svg>
         <input type="text" class="input-search" v-model="searchValue" />
         <a class="btn-default pl-5" @click="stockSearch">确定</a>
+        <span>{{ errors }}</span>
+        <span>{{ tips }}</span>
       </div>
     </div>
   </div>
 
-  <div class="grid grid-flow-col grid-cols-8 gap-2">
+  <div class="grid grid-flow-col grid-cols-8 gap-2" @keyup.down="onPageDown">
     <div class="col-start-1 col-end-1 p-1">
       <h3>今日[{{ (new Date()).getUTCDate()  }}]</h3>
-      <div class="item-box">
+      <div class="item-box" id="item-box">
         <div class="item" v-for="stock in stocks" :key="stock.symbol">
             <div>
               <label>{{ stock.symbol }}</label>

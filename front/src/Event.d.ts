@@ -8,6 +8,9 @@ interface ResponseData {
     message: string;
 }
 
+export const errors = [] as any[];
+export const tips = [] as any[];
+
 // 异步函数，使用 async/await
 export async function request(url: string): Promise<ResponseData> {
     try {
@@ -15,7 +18,7 @@ export async function request(url: string): Promise<ResponseData> {
         const response = await axios.get<ResponseData>(BASE_URL + url);
         console.log(response)
         // 从响应中返回数据
-        return response.data.data;
+        return response.data;
     } catch (error) {
         // 错误处理，可以根据需要抛出错误或者返回错误信息
         console.error('请求失败:', error);
@@ -29,7 +32,7 @@ export function refresh(stock) {
         loadStock(stock, null)
     })
     .catch(e => {
-        this.errors.push(e)
+        errors.push(e)
     })
 }
 
@@ -39,7 +42,7 @@ export function favorite(stock) {
         console.log(response)
     })
     .catch(e => {
-        this.errors.push(e)
+        errors.push(e)
     })
 }
 
@@ -49,12 +52,12 @@ export function unFavorite(stock) {
         console.log(response)
     })
     .catch(e => {
-        this.errors.push(e)
+        errors.push(e)
     })
 }
 
 export function fetchTodayRiseStock() {
-    axios.get(BASE_URL + "/api/stock/today/rise")
+    axios.get(BASE_URL + "/api/last/stock")
     .then(response => {
         stocks.value = response.data.data
         curStock.value = stocks.value[0]
@@ -62,10 +65,7 @@ export function fetchTodayRiseStock() {
         resetViewPosition()
     })
     .catch(e => {
-        this.errors.push(e)
-    })
-    .catch(e => {
-        this.errors.push(e)
+        errors.push(e)
     })
 }
 
@@ -80,23 +80,18 @@ export function stockSearch() {
         loadStock(retStock, null)
     })
     .catch(e => {
-        this.errors.push(e)
-    })
-    .catch(e => {
-        this.errors.push(e)
+        errors.push(e)
     })
 }
 
 export function downTodayRiseStock() {
-    axios.get(BASE_URL + "/api/stock/today/down")
-    .then(response => {
-        lastStockList()
+    request("/api/stock/today/down")
+    .then(res => {
+        tips.push("今日榜单已更新 "+ res.rise_count +" 只")
+        console.log(tips)
     })
     .catch(e => {
-        this.errors.push(e)
-    })
-    .catch(e => {
-        this.errors.push(e)
+        errors.push(e)
     })
 }
 
@@ -109,7 +104,7 @@ export function fetchFavoriteStock() {
         resetViewPosition()
     })
     .catch(e => {
-        this.errors.push(e)
+        errors.push(e)
     })
 }
 
@@ -117,7 +112,7 @@ export async function getStockKlineData(stock) {
     const chartData = [];
 
     const data = await request("/api/kline/"+ stock.symbol)
-    data.forEach(item => {
+    data.data.forEach(item => {
         chartData.push({
             timestamp: item[0],
             volume:    item[1],

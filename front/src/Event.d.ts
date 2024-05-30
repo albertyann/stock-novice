@@ -69,21 +69,6 @@ export function fetchTodayRiseStock() {
     })
 }
 
-export function stockSearch() {
-    axios.get(BASE_URL + "/api/stock/search/"+searchValue.value)
-    .then(response => {
-        console.log(response)
-        const retStock = response.data.data
-        
-        stocks.value.push(retStock)
-        curStock.value = retStock
-        loadStock(retStock, null)
-    })
-    .catch(e => {
-        errors.push(e)
-    })
-}
-
 export function downTodayRiseStock() {
     request("/api/stock/today/down")
     .then(res => {

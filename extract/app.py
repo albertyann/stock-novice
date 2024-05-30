@@ -82,7 +82,7 @@ def unfavorite_stock(symbol):
 
 @app.route('/api/stock/favorite')
 def get_favorite_stock():
-    stocks = session.query(FavoriteStock).all()
+    stocks = session.query(FavoriteStock).order_by(FavoriteStock.create_time.desc()).all()
     data = []
     for stock in stocks:
         tags = session.query(StockTag).filter(StockTag.symbol == stock.symbol).all()
@@ -241,7 +241,9 @@ def get_kline(symbol):
 @app.route('/api/stock/search/<symbol>')
 def stock_search(symbol):
     last_kline = session.query(KLine).filter(KLine.symbol == symbol).order_by(KLine.timestamp.desc()).all()
-    
+    quote_detail= ball.quote_detail(symbol)
+    app.logger.info(quote_detail)
+
     data = []
     if len(last_kline) > 0:
         for line in last_kline:
@@ -252,13 +254,13 @@ def stock_search(symbol):
             'symbol': symbol,
             'data'  : {
                 "symbol": symbol,
-                "name": "test",
+                "name"  : quote_detail['data']['quote']['name'],
+                "favorite": 0
             }
         }
         return jsonify(ret)
     
-    quote_detail= ball.quote_detail(symbol)
-    app.logger.info(quote_detail)
+    
     stock = None
     if quote_detail:
         name = quote_detail['data']['quote']['name']

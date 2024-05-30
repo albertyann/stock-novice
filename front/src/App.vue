@@ -7,7 +7,7 @@ import hotkeys from "hotkeys-js"
 
 import {
     request, unFavorite, fetchTodayRiseStock,
-    stockSearch, downTodayRiseStock, 
+    downTodayRiseStock, 
     getStockKlineData, errors, tips
 } from './Event.d'
 
@@ -105,6 +105,18 @@ function refresh(stock) {
 	.catch(e => {
 		console.log(e)
 	})
+}
+
+function stockSearch() {
+  request("/api/stock/search/"+searchValue.value)
+  .then((res) => {
+    let stock = res.data
+    curStock.value = stock
+    loadStock(curStock.value, null)
+  })
+  .catch(e => {
+        this.errors.push(e)
+  })
 }
 
 function favorite(stock) {

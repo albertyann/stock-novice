@@ -182,8 +182,14 @@ function todayStockList() {
   })
 }
 
-function onPageDown(e) {
-  console.log(e)
+function queryZanStock() {
+  request("/api/stock/solve/zan")
+  .then(res => {
+    console.log(res)
+  })
+  .catch(e => {
+    errors.push(e)
+  })
 }
 
 onMounted(() => {
@@ -203,7 +209,7 @@ onUnmounted(() => {
   <div class="grid grid-cols-4 gap-px-4">
     <div class="py-4 col-start-1 col-end-1">
       <a class="btn-primary" href="javascript:void(0)" @click="downTodayRiseStock">Down</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">标注</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="queryZanStock">手气不错</a>
     </div>
     <div class="py-4 col-start-2 col-end-3">
       <a class="btn-primary" href="javascript:void(0)" @click="todayStockList">今日</a>

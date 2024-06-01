@@ -5,9 +5,10 @@ from datetime import datetime
 from sqlalchemy import create_engine, delete
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
-from models import KLine, Stock, RiseStock, StockTag, FavoriteStock
+from models import *
 
 import requests
+import numpy as np
 
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -138,6 +139,48 @@ def selectLastStock():
     }
     return jsonify(ret)
 
+# 计算近三十个交易日的波动
+def std_third(prices):
+    # TODO 计算波动率
+    return 0.1
+
+
+@app.route('/api/stock/solve/zan')
+def selectZanStock():
+    # 获取当前日期
+    today = datetime.now().date()
+
+    # 将时间设置为0点0分0秒
+    min_night = datetime.combine(today, datetime.min.time())
+
+    # 转换为时间戳
+    min_today_timestamp = int(time.mktime(min_night.timetuple()))
+
+    last_stock = session.query(RiseStock).order_by(RiseStock.date.desc()).first()
+    stocks = session.query(RiseStock).filter(RiseStock.date == last_stock.date).all()
+
+    # last_stock_list = session.query(StockZan).filter(StockZan.create_time > min_today_timestamp).all()
+    data = []
+    for stock in stocks:
+        tags = session.query(StockTag).filter(StockTag.symbol == stock.symbol).all()
+        kline_data = session.query(KLine).filter(KLine.symbol == stock.symbol).all()
+
+        app.logger.info(f'kline_data: {kline_data[0]}')
+
+
+        data_tags = [tag.tag for tag in tags]
+        data.append({
+            'symbol'   : stock.symbol,
+            'name'     : stock.name,
+            'tags'     : data_tags,
+            'favorite' : 0
+        })
+    ret = {
+        'code': 0,
+        'data': data
+    }
+    return jsonify(ret)
+
 
 def get_stock_data(page):
     # app.logger.info(f'page: {page}')
@@ -172,10 +215,10 @@ def rise():
     today = datetime.now().date()
 
     # 将时间设置为0点0分0秒
-    midnight = datetime.combine(today, datetime.min.time())
+    min_night = datetime.combine(today, datetime.min.time())
 
     # 转换为时间戳
-    midnight_timestamp = int(time.mktime(midnight.timetuple()))
+    min_today_timestamp = int(time.mktime(min_night.timetuple()))
 
     insert_stocks = []
     insert_count = 0
@@ -202,7 +245,7 @@ def rise():
             rise_stocks.append({
                 'symbol': symbol,
                 'name'  : stock['name'],
-                'time'  : midnight_timestamp,
+                'time'  : min_today_timestamp,
                 'date'  : today.strftime("%Y-%m-%d"),
                 'favorite' : 0 if symbol not in favorite_data else 1
             })

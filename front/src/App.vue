@@ -185,7 +185,11 @@ function todayStockList() {
 function queryZanStock() {
   request("/api/stock/solve/zan")
   .then(res => {
-    console.log(res)
+    stocks.value = res.data
+    curStock.value = stocks.value[0]
+
+    loadStock(curStock.value, null)
+    resetViewPosition()
   })
   .catch(e => {
     errors.push(e)
@@ -209,7 +213,7 @@ onUnmounted(() => {
   <div class="grid grid-cols-4 gap-px-4">
     <div class="py-4 col-start-1 col-end-1">
       <a class="btn-primary" href="javascript:void(0)" @click="downTodayRiseStock">Down</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="queryZanStock">手气不错</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="queryZanStock">分析</a>
     </div>
     <div class="py-4 col-start-2 col-end-3">
       <a class="btn-primary" href="javascript:void(0)" @click="todayStockList">今日</a>
@@ -242,6 +246,7 @@ onUnmounted(() => {
               <a class="name" href="javascript:void(0)">{{ stock.name }}</a>
             </div>
             <div class="item-tags-box">
+              <span>{{ stock.variance }}</span>
               <span class="stock_tag" v-for="tag in stock.tags" :key="tag"> {{ tag }}</span>
             </div>
         </div>

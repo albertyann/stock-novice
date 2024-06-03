@@ -15,7 +15,7 @@ from flask_cors import CORS
 
 import pysnowball as ball
 
-ball.set_token("xq_a_token=ef6dd47ded9cb22a347efa0a6390915416bb1b21")
+ball.set_token("xq_a_token=a6d94c522a38e130310a73b9b6cf97666efeedb2")
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS
@@ -127,6 +127,7 @@ def selectLastStock():
     for stock in stocks:
         tags = session.query(StockTag).filter(StockTag.symbol == stock.symbol).all()
         data_tags = [tag.tag for tag in tags]
+
         data.append({
             'symbol'   : stock.symbol,
             'name'     : stock.name,
@@ -140,9 +141,22 @@ def selectLastStock():
     return jsonify(ret)
 
 # 计算近三十个交易日的波动
-def std_third(prices):
-    # TODO 计算波动率
-    return 0.1
+def std_third(kline_data):
+    today = datetime.timestamp(datetime.now()) * 1000 - 30 * 24 * 60 * 60 * 1000
+
+    price_data = []
+    for item in kline_data:
+        data = json.loads(item.data)
+        if data[0] < today:
+            continue
+
+        price_data.append(data[5])
+    
+    # 计算30日数据方差
+    variance = np.var(price_data)
+    app.logger.info(f'kline_data: {variance}')
+
+    return variance
 
 
 @app.route('/api/stock/solve/zan')
@@ -158,22 +172,23 @@ def selectZanStock():
 
     last_stock = session.query(RiseStock).order_by(RiseStock.date.desc()).first()
     stocks = session.query(RiseStock).filter(RiseStock.date == last_stock.date).all()
+    
 
     # last_stock_list = session.query(StockZan).filter(StockZan.create_time > min_today_timestamp).all()
     data = []
     for stock in stocks:
         tags = session.query(StockTag).filter(StockTag.symbol == stock.symbol).all()
         kline_data = session.query(KLine).filter(KLine.symbol == stock.symbol).all()
-
         app.logger.info(f'kline_data: {kline_data[0]}')
-
+        variance = std_third(kline_data)
 
         data_tags = [tag.tag for tag in tags]
         data.append({
             'symbol'   : stock.symbol,
             'name'     : stock.name,
             'tags'     : data_tags,
-            'favorite' : 0
+            'favorite' : 0,
+            'variance' : "{:.2f}".format(variance)
         })
     ret = {
         'code': 0,

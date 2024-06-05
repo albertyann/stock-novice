@@ -115,6 +115,22 @@ def get_stock_tag(symbol):
     }
     return jsonify(ret) 
 
+@app.route('/api/main/stock')
+def selectMainStock():
+    stocks = session.query(StockMain).all()
+    data = []
+    for stock in stocks:
+        data.append({
+            'symbol'   : stock.symbol,
+            'name'     : stock.name,
+            'tags'     : [],
+            'favorite' : 0
+        })
+    ret = {
+        'code': 0,
+        'data': data
+    }
+    return jsonify(ret)
 
 @app.route('/api/last/stock')
 def selectLastStock():
@@ -172,9 +188,7 @@ def selectZanStock():
 
     last_stock = session.query(RiseStock).order_by(RiseStock.date.desc()).first()
     stocks = session.query(RiseStock).filter(RiseStock.date == last_stock.date).all()
-    
 
-    # last_stock_list = session.query(StockZan).filter(StockZan.create_time > min_today_timestamp).all()
     data = []
     for stock in stocks:
         tags = session.query(StockTag).filter(StockTag.symbol == stock.symbol).all()

@@ -53,6 +53,16 @@ class StockZan(Base):
     def __repr__(self):
         return "<StockZan(name='%s', symbol='%s', create_time='%s')>" % (self.name, self.symbol, self.create_time)
     
+class StockMain(Base):
+    __tablename__ = 'stock_main'
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    symbol      = Column(String(32))
+    name        = Column(String(32))
+    create_time = Column(DateTime)
+
+    def __repr__(self):
+        return "<StockMain(name='%s', symbol='%s', create_time='%s')>" % (self.name, self.symbol, self.create_time)
+    
 class RiseStock(Base):
     __tablename__ = 'rise_stocks'
     id     = Column(Integer, primary_key=True, autoincrement=True)

@@ -196,6 +196,25 @@ function queryZanStock() {
   })
 }
 
+function mainStockList() {
+  request("/api/main/stock")
+  .then(res => {
+    if (res.data.length > 0) {
+      stocks.value = res.data
+      console.log(stocks.value)
+      curStock.value = stocks.value[0]
+
+      loadStock(curStock.value, null)
+      resetViewPosition()
+    } else {
+      stocks.value.length = 0
+    }
+  })
+  .catch(e => {
+    errors.push(e)
+  })
+}
+
 onMounted(() => {
   chart.chart = init('chart')
   chart.chart.setStyles(chartOption)
@@ -218,8 +237,7 @@ onUnmounted(() => {
     <div class="py-4 col-start-2 col-end-3">
       <a class="btn-primary" href="javascript:void(0)" @click="todayStockList">今日</a>
       <a class="btn-primary" href="javascript:void(0)" @click="favoriteStockList">关注</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">头部</a>
-      <a class="btn-primary" href="javascript:void(0)" @click="fetchTodayRiseStock">长期</a>
+      <a class="btn-primary" href="javascript:void(0)" @click="mainStockList">长期</a>
     </div>
     <div class="py-4 col-start-3 col-end-5">
       <div class="group relative rounded-md dark:bg-slate-700 dark:highlight-white/10 dark:focus-within:bg-transparent">

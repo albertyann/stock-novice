@@ -6,11 +6,12 @@ import hotkeys from "hotkeys-js"
 
 
 import {
-    request, unFavorite, fetchTodayRiseStock,
+    request, unFavorite,
     downTodayRiseStock, 
-    getStockKlineData, errors, tips
+    getStockKlineData, tips
 } from './Event.d'
 
+const errors = ref([])
 const stocks = ref([])
 const curStock = ref({
   symbol: '',
@@ -29,7 +30,6 @@ hotkeys("j", () => {
     }
   }
   if (stockIndex == stocks.value.length - 1) {
-	console.log('last')
 	return false
   }
   if (stockIndex < stocks.value.length - 1) {
@@ -50,7 +50,6 @@ hotkeys("k", () => {
     }
   }
   if (stockIndex == 0) {
-	console.log('first')
 	return false
   }
   if (stockIndex > 0) {
@@ -115,30 +114,30 @@ function stockSearch() {
     loadStock(curStock.value, null)
   })
   .catch(e => {
-        this.errors.push(e)
+    this.errors.push(e)
   })
 }
 
 function favorite(stock) {
     request("/api/stock/favorite/"+ stock.symbol)
     .then(response => {
-        console.log(response)
+      console.log(response)
     })
     .catch(e => {
-        this.errors.push(e)
+      this.errors.push(e)
     })
 }
 
 function favoriteStockList() {
   request("/api/stock/favorite")
   .then(res => {
-        stocks.value = res.data
-        curStock.value = stocks.value[0]
-        loadStock(curStock.value, null)
-        resetViewPosition()
+      stocks.value = res.data
+      curStock.value = stocks.value[0]
+      loadStock(curStock.value, null)
+      resetViewPosition()
     })
     .catch(e => {
-        this.errors.push(e)
+      this.errors.push(e)
     })
 }
 
@@ -158,12 +157,12 @@ function loadStock(stock, event) {
   getStockKlineData(stock)
   .then((res) => {
     if (res.length > 0) {
-		let stock = res.at(-1)
-		let d = new Date(stock.timestamp)
-		klineLastDate.value = (d.getMonth() + 1) + "-" + d.getDate()
+      let stock = res.at(-1)
+      let d = new Date(stock.timestamp)
+      klineLastDate.value = (d.getMonth() + 1) + "-" + d.getDate()
     } else {
-		klineLastDate.value = ''
-	}
+      klineLastDate.value = ''
+    }
     chart.chart.applyNewData(res)
   })
 }
@@ -201,7 +200,6 @@ function mainStockList() {
   .then(res => {
     if (res.data.length > 0) {
       stocks.value = res.data
-      console.log(stocks.value)
       curStock.value = stocks.value[0]
 
       loadStock(curStock.value, null)

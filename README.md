@@ -8,3 +8,6 @@ This is a Kanban software for selecting stocks, and stock strategies will be a s
 目录结构说明：
 front - 用来做前端展示的
 extract - 用来拉取股票数据，获取的股票数据会被放到数据库中，数据库请自行准备
+
+# 股票交易策略
+主要策略来自 [TradeView](https://cn.tradingview.com/markets/stocks-china/ideas/)

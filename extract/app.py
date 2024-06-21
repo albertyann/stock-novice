@@ -15,7 +15,7 @@ from flask_cors import CORS
 
 import pysnowball as ball
 
-ball.set_token("xq_a_token=a6d94c522a38e130310a73b9b6cf97666efeedb2")
+ball.set_token("xq_a_token=e7ca287b49a349652b1c0d2354d8da044056c7d9")
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS
@@ -213,12 +213,12 @@ def selectZanStock():
 
 def get_stock_data(page):
     # app.logger.info(f'page: {page}')
-    data = requests.get(f"https://stock.xueqiu.com/v5/stock/screener/quote/list.json?page={page}&size=90&order=desc&order_by=percent&market=CN&type=sh_sz",
+    data = requests.get(f"https://stock.xueqiu.com/v5/stock/screener/quote/list.json?page={page}&size=30&order=desc&order_by=percent&market=CN&type=sh_sz",
                 headers={
-                    "Cookie": ball.get_token(),
+                    "Cookie": "cookiesu=761693992478392; device_id=1aaee16d2ee425e89504fbcd03d8d56c; s=bl11m53hm2; bid=8b50ff4cf180ae3b2fc8d3087918d6dc_lmajpx46; xq_is_login=1; u=7088517671; xq_a_token=e7ca287b49a349652b1c0d2354d8da044056c7d9; xqat=e7ca287b49a349652b1c0d2354d8da044056c7d9; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOjcwODg1MTc2NzEsImlzcyI6InVjIiwiZXhwIjoxNzIxNTY1OTYwLCJjdG0iOjE3MTg5NzM5NjAxMjEsImNpZCI6ImQ5ZDBuNEFadXAifQ.OQBM8cTYMQAc_rC8hHGw_C-MKiuL-zoBxzZURS0K-yyeB2OIUFkcfjSJrTc-zOuxp5q5jzRxhS5p4tSDb7BVqTPweC8GfozPIYqEvx-vGIL2ey1w0ZKlKfarHBChZVoB6agCPvGVtKC4TghGavFVcH4QML0fCyEL2O38Ou6IopP5_ENRgIe5J-lKemNvysZh5nr1TRvJbxHb-TCZTlnnrYwk5xhWMB7GUf_uGb2S59BbwrduFMy4eGqtYXbHLLI229P51UvApT4Ju2ZLIL9wLnakMDjSGoja549d8tA0IOFeZ9H1zwTVxcWp-m_80OvU1H7CIyWS-B4S4g9LoVWDww; xq_r_token=0aad325f9ec936a20e59cbbc74b2ab44e767931b; Hm_lvt_1db88642e346389874251b5a1eded6e3=1717567194,1717654422,1718282877,1718973963; is_overseas=0; Hm_lpvt_1db88642e346389874251b5a1eded6e3=1718974369",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
                 })
-    
+    app.logger.info(f'data: {data.json()}')
     return data
 
 def get_all_stock_list():
@@ -253,6 +253,7 @@ def rise():
     insert_count = 0
     for page in range(1, 3):
         data = get_stock_data(page)
+		# app.logger.info(f'page: {page}')
         stock_list = data.json()['data']['list']
 
         # 获取的股票数量

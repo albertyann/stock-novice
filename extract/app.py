@@ -7,15 +7,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 from models import *
 
-import requests
+import tushare as ts
 import numpy as np
 
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-import pysnowball as ball
+# import pysnowball as ball
 
-ball.set_token("xq_a_token=e7ca287b49a349652b1c0d2354d8da044056c7d9")
+ts.set_token('676be7fa4f649f8bc8b82b331d2aa438421ce6f6a58894771872c1a7')
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS
@@ -25,21 +25,6 @@ engine = create_engine(f'sqlite:///{dirname}/../data/stock.db', echo=True)
 
 session = Session(engine)
 
-
-@app.route('/api/set/token/<token>')
-def set_token(token):
-    ball.set_token('xq_a_token=' + token)
-    return jsonify({
-        'code': 0,
-        'message': 'Token set successfully'
-    })
-
-@app.route('/api/get/token')
-def get_token():
-    return jsonify({
-        'code': 0,
-        'token': ball.get_token()
-    })
 
 @app.route('/api/stock/tag/<symbol>/<tag>')
 def stock_set_tag(symbol, tag):
@@ -212,6 +197,7 @@ def selectZanStock():
 
 
 def get_stock_data(page):
+    # 获取指定股票的数据
     # app.logger.info(f'page: {page}')
     data = requests.get(f"https://stock.xueqiu.com/v5/stock/screener/quote/list.json?page={page}&size=30&order=desc&order_by=percent&market=CN&type=sh_sz",
                 headers={
@@ -313,113 +299,126 @@ def get_kline(symbol):
 
 @app.route('/api/stock/search/<symbol>')
 def stock_search(symbol):
-    last_kline = session.query(KLine).filter(KLine.symbol == symbol).order_by(KLine.timestamp.desc()).all()
-    quote_detail= ball.quote_detail(symbol)
-    app.logger.info(quote_detail)
+    pro = ts.pro_api()
+    #  ts_code  symbol     name area industry list_date
+    stocks = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
+    app.logger.info(stocks)
 
     data = []
-    if len(last_kline) > 0:
-        for line in last_kline:
-            data.append(json.loads(line.data))
+    for stock in stocks:
+        # tags = session.query(StockTag).filter(StockTag.symbol == stock.symbol).all()
+        # data_tags = [tag.tag for tag in tags]
+        data.append({
+            'symbol': stock.symbol,
+            'name'  : stock.name,
+            'tags'  : stock.industry,
+            'favorite': 1 
+        })
 
-        ret = {
-            'code'  : 0,
-            'symbol': symbol,
-            'data'  : {
-                "symbol": symbol,
-                "name"  : quote_detail['data']['quote']['name'],
-                "favorite": 0
-            }
-        }
-        return jsonify(ret)
+    # data = []
+    # if len(last_kline) > 0:
+    #     for line in last_kline:
+    #         data.append(json.loads(line.data))
+
+    #     ret = {
+    #         'code'  : 0,
+    #         'symbol': symbol,
+    #         'data'  : {
+    #             "symbol": symbol,
+    #             "name"  : quote_detail['data']['quote']['name'],
+    #             "favorite": 0
+    #         }
+    #     }
+    #     return jsonify(ret)
     
     
-    stock = None
-    if quote_detail:
-        name = quote_detail['data']['quote']['name']
-        app.logger.info(quote_detail)
-        stock = Stock(
-            symbol = symbol,
-            name   = name,
-        )
-        session.add(stock)
-        session.commit()
+    # stock = None
+    # if quote_detail:
+    #     name = quote_detail['data']['quote']['name']
+    #     app.logger.info(quote_detail)
+    #     stock = Stock(
+    #         symbol = symbol,
+    #         name   = name,
+    #     )
+    #     session.add(stock)
+    #     session.commit()
     
-    last_timestamp = data[0] if data else 0
-    app.logger.info(last_timestamp)
+    # last_timestamp = data[0] if data else 0
+    # app.logger.info(last_timestamp)
     
-    new_kline = ball.kline(symbol)
-    if new_kline:
-        if len(data) == 0:
-            for row in new_kline['data']['item']:
-                timestamp = row[0]
-                k_data = json.dumps(row)
-                kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
-                session.add(kline)
-                session.commit()
-        else:
-            for row in new_kline['data']['item'][-10:]:
-                timestamp = row[0]
-                # 如果时间戳小于上次的时间戳，则跳过
-                if timestamp <= last_timestamp:
-                    continue
-                else:
-                    app.logger.info("add new kline", timestamp)
-                    k_data = json.dumps(row)
-                    kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
-                    session.add(kline)
-                    session.commit()
+    # new_kline = ball.kline(symbol)
+    # if new_kline:
+    #     if len(data) == 0:
+    #         for row in new_kline['data']['item']:
+    #             timestamp = row[0]
+    #             k_data = json.dumps(row)
+    #             kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
+    #             session.add(kline)
+    #             session.commit()
+    #     else:
+    #         for row in new_kline['data']['item'][-10:]:
+    #             timestamp = row[0]
+    #             # 如果时间戳小于上次的时间戳，则跳过
+    #             if timestamp <= last_timestamp:
+    #                 continue
+    #             else:
+    #                 app.logger.info("add new kline", timestamp)
+    #                 k_data = json.dumps(row)
+    #                 kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
+    #                 session.add(kline)
+    #                 session.commit()
 
     ret = {
         'code'  : 0,
         'data'  : {
-            "symbol": stock.symbol,
-            "name": stock.name,
+            # "symbol": stock.symbol,
+            # "name": stock.name,
         }
     }
     return jsonify(ret)
 
 @app.route('/api/fetch/kline/<symbol>')
 def fetch_kline(symbol):
-    last_kline = session.query(KLine).filter(KLine.symbol == symbol).order_by(KLine.timestamp.desc()).limit(1).all()
-    data = None
+    pro = ts.pro_api()
+    df = pro.daily(ts_code='000001.SZ', start_date='20180701', end_date='20180718')
     
-    app.logger.info(last_kline)
-    for stock in last_kline:
-        data = json.loads(stock.data)
+    app.logger.info(df)
+    # for stock in last_kline:
+    #     data = json.loads(stock.data)
 
-    app.logger.info(data)
-    last_timestamp = data[0] if data else 0
-    app.logger.info(last_timestamp)
+    # app.logger.info(data)
+    # last_timestamp = data[0] if data else 0
+    # app.logger.info(last_timestamp)
 
-    new_kline = ball.kline(symbol)
-    if new_kline:
-        if data is None:
-            for row in new_kline['data']['item']:
-                timestamp = row[0]
-                k_data = json.dumps(row)
-                kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
-                session.add(kline)
-                session.commit()
-        else:
-            n_klines = new_kline['data']['item'][-10:]
-            kline = n_klines[-1]
-            app.logger.info(kline)
-            stmt = delete(KLine).where(KLine.timestamp > kline[0]).where(KLine.symbol == symbol)
+    # new_kline = ball.kline(symbol)
+    # if new_kline:
+    #     if data is None:
+    #         for row in new_kline['data']['item']:
+    #             timestamp = row[0]
+    #             k_data = json.dumps(row)
+    #             kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
+    #             session.add(kline)
+    #             session.commit()
+    #     else:
+    #         n_klines = new_kline['data']['item'][-10:]
+    #         kline = n_klines[-1]
+    #         app.logger.info(kline)
+    #         stmt = delete(KLine).where(KLine.timestamp > kline[0]).where(KLine.symbol == symbol)
             
-            app.logger.info(stmt)
+    #         app.logger.info(stmt)
 
-            for row in n_klines:
-                timestamp = row[0]
-                # 如果时间戳小于上次的时间戳，则跳过
-                if timestamp <= last_timestamp:
-                    continue
-                else:
-                    app.logger.info("add new kline", timestamp)
-                    k_data = json.dumps(row)
-                    kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
-                    session.add(kline)
-                    session.commit()
+    #         for row in n_klines:
+    #             timestamp = row[0]
+    #             # 如果时间戳小于上次的时间戳，则跳过
+    #             if timestamp <= last_timestamp:
+    #                 continue
+    #             else:
+    #                 app.logger.info("add new kline", timestamp)
+
+    #                 k_data = json.dumps(row)
+    #                 kline  = KLine(timestamp = timestamp, symbol = symbol, data = k_data)
+    #                 session.add(kline)
+    #                 session.commit()
 
     return jsonify({"data": {"code": 0}})
 
